@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>냠냠 맛집지도 🍙 AI 맛집 추천</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink:#ff8fab; --pink-l:#ffe3ec; --yellow:#ffd96a; --yellow-l:#fff6d6;
+    --mint:#8fe3c8; --mint-l:#e2faf2; --sky:#9ccfff; --sky-l:#e5f2ff;
+    --lav:#c9b6ff; --ink:#5b4a52; --ink-l:#9a8890; --bg:#fff9f4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Gowun Dodum',sans-serif;color:var(--ink);
+    background:var(--bg);
+    background-image:radial-gradient(var(--pink-l) 2px,transparent 2px);
+    background-size:28px 28px;min-height:100vh;padding-bottom:60px;
+  }
+  h1,h2,h3,.jua,button{font-family:'Jua',sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:0 18px}
+
+  /* header */
+  header{padding:34px 0 10px;text-align:center;position:relative}
+  .logo{font-size:44px;color:var(--pink);letter-spacing:1px;text-shadow:3px 3px 0 var(--yellow)}
+  .logo .bounce{display:inline-block;animation:bounce 1.6s infinite}
+  .sub{margin-top:6px;color:var(--ink-l);font-size:16px}
+  .key-btn{position:absolute;right:0;top:30px;border:none;background:#fff;
+    border:2px solid var(--pink-l);border-radius:999px;padding:8px 14px;cursor:pointer;
+    color:var(--ink);font-size:14px;box-shadow:0 3px 0 var(--pink-l)}
+  .key-btn.ok{border-color:var(--mint);box-shadow:0 3px 0 var(--mint)}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+  /* search card */
+  .card{background:#fff;border-radius:28px;padding:24px;margin-top:18px;
+    box-shadow:0 6px 0 var(--pink-l),0 10px 30px rgba(255,143,171,.15);border:3px solid #ffeef3}
+  .label{font-family:'Jua';font-size:18px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .search-row{display:flex;gap:10px}
+  .search-row input{flex:1;border:3px solid var(--pink-l);border-radius:18px;padding:14px 18px;
+    font-size:17px;font-family:'Gowun Dodum';color:var(--ink);outline:none;transition:.2s}
+  .search-row input:focus{border-color:var(--pink);background:#fffafc}
+  .go{border:none;background:var(--pink);color:#fff;font-size:19px;padding:0 26px;border-radius:18px;
+    cursor:pointer;box-shadow:0 5px 0 #e9708f;transition:.1s;white-space:nowrap}
+  .go:active{transform:translateY(4px);box-shadow:0 1px 0 #e9708f}
+  .go:disabled{opacity:.6;cursor:wait}
+  .quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .quick button{border:none;background:var(--yellow-l);color:var(--ink);font-size:13px;
+    padding:6px 12px;border-radius:999px;cursor:pointer}
+  .quick button:hover{background:var(--yellow)}
+  .sec{margin-top:22px}
+  .chips{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{border:3px solid transparent;background:var(--sky-l);border-radius:20px;padding:10px 14px;
+    cursor:pointer;font-size:16px;color:var(--ink);transition:.15s;display:flex;align-items:center;gap:6px}
+  .chip .em{font-size:22px}
+  .chip:hover{transform:translateY(-2px)}
+  .chip.on{background:var(--pink-l);border-color:var(--pink);box-shadow:0 4px 0 var(--pink)}
+  .opts{display:flex;flex-wrap:wrap;gap:18px;margin-top:22px}
+  .opt{display:flex;flex-direction:column;gap:6px}
+  .opt select{border:3px solid var(--mint-l);border-radius:14px;padding:9px 12px;font-family:'Gowun Dodum';
+    font-size:15px;color:var(--ink);background:#fff;outline:none}
+
+  /* results */
+  .result-head{display:flex;justify-content:space-between;align-items:end;margin:34px 4px 14px}
+  .result-head h2{font-size:24px}
+  .result-head small{color:var(--ink-l)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+  .r{background:#fff;border-radius:24px;padding:20px;cursor:pointer;position:relative;
+    border:3px solid #fff;box-shadow:0 6px 0 var(--c,var(--pink-l));transition:.18s;animation:pop .45s backwards}
+  .r:hover{transform:translateY(-5px) rotate(-.5deg);border-color:var(--c,var(--pink-l))}
+  @keyframes pop{from{opacity:0;transform:scale(.85) translateY(20px)}}
+  .r .badge{position:absolute;top:-12px;right:16px;background:var(--c);color:var(--ink);
+    font-family:'Jua';font-size:13px;padding:4px 12px;border-radius:999px}
+  .r .ic{font-size:40px;width:64px;height:64px;border-radius:20px;background:var(--cl);
+    display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .r h3{font-size:21px;margin-bottom:6px}
+  .r .one{font-size:14.5px;color:var(--ink-l);line-height:1.5;min-height:44px}
+  .r .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .tag{font-size:12.5px;background:var(--bg);padding:4px 10px;border-radius:999px}
+  .r .more{margin-top:12px;font-family:'Jua';color:var(--pink);font-size:14px}
+
+  /* empty/loading */
+  .empty{text-align:center;padding:50px 20px;color:var(--ink-l)}
+  .empty .big{font-size:70px;margin-bottom:10px}
+  .loading{text-align:center;padding:50px 20px}
+  .loading .foods span{display:inline-block;font-size:42px;animation:bounce 1s infinite}
+  .loading .foods span:nth-child(2){animation-delay:.15s}
+  .loading .foods span:nth-child(3){animation-delay:.3s}
+  .loading .foods span:nth-child(4){animation-delay:.45s}
+  .loading p{margin-top:14px;font-family:'Jua';font-size:18px}
+  .err{background:#fff0f0;border:3px dashed #ffb3b3;border-radius:20px;padding:18px;margin-top:30px;
+    color:#c25555;line-height:1.6}
+
+  /* modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(91,74,82,.35);display:none;align-items:center;
+    justify-content:center;padding:16px;z-index:50;backdrop-filter:blur(3px)}
+  .modal-bg.show{display:flex}
+  .modal{background:#fff;border-radius:30px;width:100%;max-width:620px;max-height:92vh;overflow:auto;
+    position:relative;animation:pop .3s;border:4px solid var(--c,var(--pink-l))}
+  .m-top{background:var(--cl,var(--pink-l));padding:26px 26px 20px;border-radius:26px 26px 0 0}
+  .m-top .ic{font-size:48px}
+  .m-top h2{font-size:28px;margin-top:6px}
+  .m-top p{margin-top:6px;line-height:1.55}
+  .x{position:absolute;top:14px;right:14px;border:none;background:#fff;width:38px;height:38px;
+    border-radius:50%;font-size:18px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.08)}
+  .m-body{padding:22px 26px 26px}
+  .m-body h3{font-size:19px;margin:18px 0 10px}
+  .m-body h3:first-child{margin-top:0}
+  .addr{display:flex;gap:8px;align-items:flex-start;background:var(--sky-l);padding:12px 14px;border-radius:16px;line-height:1.5}
+  .map{width:100%;height:240px;border:none;border-radius:18px;margin-top:10px;background:var(--sky-l)}
+  .links{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .links a{text-decoration:none;font-family:'Jua';font-size:14px;padding:8px 14px;border-radius:999px;color:#fff}
+  .links .nv{background:#03c75a}.links .kk{background:#f9d71c;color:#3b1e1e}.links .gg{background:#7aa7ff}
+  .menu{list-style:none;display:flex;flex-direction:column;gap:8px}
+  .menu li{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--yellow-l);
+    padding:12px 16px;border-radius:16px}
+  .menu .nm{font-family:'Jua';font-size:16px}
+  .menu .ds{font-size:13px;color:var(--ink-l);margin-top:2px}
+  .menu .pr{font-family:'Jua';color:var(--pink);font-size:17px;white-space:nowrap}
+  .menu li.best{background:var(--pink-l)}
+  .tipbox{background:var(--mint-l);padding:12px 16px;border-radius:16px;line-height:1.6;font-size:15px}
+  .note{font-size:12.5px;color:var(--ink-l);margin-top:16px;line-height:1.5}
+
+  /* key modal */
+  .kmodal{max-width:460px;padding:28px}
+  .kmodal h2{font-size:24px;margin-bottom:8px}
+  .kmodal p{font-size:14px;color:var(--ink-l);line-height:1.6}
+  .kmodal input,.kmodal select{width:100%;margin-top:12px;border:3px solid var(--pink-l);border-radius:14px;
+    padding:12px 14px;font-size:15px;outline:none;font-family:'Gowun Dodum';color:var(--ink)}
+  .kmodal .row{display:flex;gap:8px;margin-top:16px}
+  .kmodal .row button{flex:1;border:none;border-radius:14px;padding:12px;font-size:16px;cursor:pointer}
+  .save{background:var(--pink);color:#fff;box-shadow:0 4px 0 #e9708f}
+  .del{background:var(--bg);color:var(--ink)}
+  footer{text-align:center;color:var(--ink-l);font-size:13px;margin-top:40px}
+
+  @media(max-width:600px){
+    .logo{font-size:34px}
+    .key-btn{position:static;margin-top:12px}
+    .search-row{flex-direction:column}.go{padding:14px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><span class="bounce">🍙</span> 냠냠 맛집지도 <span class="bounce" style="animation-delay:.3s">🍜</span></div>
+    <div class="sub">동네만 알려주면 AI가 맛집을 콕콕 골라줄게요!</div>
+    <button class="key-btn" id="keyBtn">🔑 API 키 설정</button>
+  </header>
+
+  <section class="card">
+    <div class="label">📍 어디서 먹을까요?</div>
+    <form class="search-row" id="form">
+      <input id="region" placeholder="예) 서울 성수동, 부산 서면, 전주 한옥마을" autocomplete="off" />
+      <button class="go" id="goBtn" type="submit">맛집 찾기 🔍</button>
+    </form>
+    <div class="quick" id="quick"></div>
+
+    <div class="sec">
+      <div class="label">🍽️ 뭐 먹고 싶어요? <small style="font-family:'Gowun Dodum';color:var(--ink-l);font-size:13px">(여러 개 골라도 돼요)</small></div>
+      <div class="chips" id="cats"></div>
+    </div>
+
+    <div class="opts">
+      <div class="opt"><div class="label" style="margin:0">💰 가격대</div>
+        <select id="price">
+          <option value="상관없음">상관없어요</option>
+          <option value="1인 1만원 이하">가성비 (~1만원)</option>
+          <option value="1인 1~3만원">적당히 (1~3만원)</option>
+          <option value="1인 3만원 이상">플렉스 (3만원~)</option>
+        </select></div>
+      <div class="opt"><div class="label" style="margin:0">👫 누구랑?</div>
+        <select id="who">
+          <option value="상관없음">상관없어요</option>
+          <option value="혼밥">혼밥</option><option value="친구">친구랑</option>
+          <option value="데이트">데이트</option><option value="가족">가족</option>
+          <option value="회식/단체">회식·단체</option>
+        </select></div>
+      <div class="opt"><div class="label" style="margin:0">🔢 몇 곳?</div>
+        <select id="count"><option>4</option><option selected>6</option><option>8</option></select></div>
+    </div>
+  </section>
+
+  <div id="out">
+    <div class="empty"><div class="big">🐣</div>지역을 입력하고 <b>맛집 찾기</b>를 눌러보세요!</div>
+  </div>
+
+  <footer>AI 추천 정보는 실제와 다를 수 있어요. 방문 전 지도 앱에서 영업 여부와 가격을 꼭 확인하세요 🙏</footer>
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal-bg" id="detailBg"><div class="modal" id="detail"></div></div>
+
+<!-- API 키 모달 -->
+<div class="modal-bg" id="keyBg">
+  <div class="modal kmodal">
+    <button class="x" data-close="keyBg">✕</button>
+    <h2>🔑 OpenAI API 설정</h2>
+    <p>ChatGPT API 키를 입력해 주세요. 키는 <b>이 브라우저(localStorage)</b>에만 저장되고, OpenAI 서버로만 전송돼요.</p>
+    <input id="keyInput" type="password" placeholder="sk-..." />
+    <select id="modelInput">
+      <option value="gpt-4o-mini">gpt-4o-mini (빠르고 저렴)</option>
+      <option value="gpt-4o">gpt-4o</option>
+      <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+      <option value="gpt-4.1">gpt-4.1</option>
+    </select>
+    <input id="modelCustom" placeholder="다른 모델명을 직접 입력 (선택)" />
+    <div class="row">
+      <button class="del" id="keyDel">키 삭제</button>
+      <button class="save" id="keySave">저장하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATS = [
+  {k:'한식',e:'🍚',c:'#ffb38a',cl:'#fff0e6'},
+  {k:'중식',e:'🥟',c:'#ff8f8f',cl:'#ffecec'},
+  {k:'일식',e:'🍣',c:'#9ccfff',cl:'#e5f2ff'},
+  {k:'양식',e:'🍝',c:'#ffd96a',cl:'#fff6d6'},
+  {k:'분식',e:'🍢',c:'#ff8fab',cl:'#ffe3ec'},
+  {k:'고기',e:'🥩',c:'#e8a0a0',cl:'#fcecec'},
+  {k:'해산물',e:'🦐',c:'#8fd3e3',cl:'#e3f6fa'},
+  {k:'아시안',e:'🍜',c:'#b5e38f',cl:'#eefae3'},
+  {k:'카페·디저트',e:'🍰',c:'#c9b6ff',cl:'#f1ecff'},
+];
+const QUICK = ['서울 강남역','서울 홍대','서울 성수동','부산 해운대','대구 동성로','전주 한옥마을','제주 애월','나주 빛가람동'];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const store = {
+  get(k){ try{return localStorage.getItem(k)}catch(e){return null} },
+  set(k,v){ try{localStorage.setItem(k,v)}catch(e){} },
+  del(k){ try{localStorage.removeItem(k)}catch(e){} }
+};
+let selected = new Set();
+let results = [];
+
+/* ---------- UI 초기화 ---------- */
+$('#cats').innerHTML = `<button type="button" class="chip on" data-k="전체"><span class="em">✨</span>전체</button>` +
+  CATS.map(c=>`<button type="button" class="chip" data-k="${c.k}"><span class="em">${c.e}</span>${c.k}</button>`).join('');
+$('#cats').addEventListener('click', e=>{
+  const b = e.target.closest('.chip'); if(!b) return;
+  const k = b.dataset.k;
+  if(k==='전체'){ selected.clear(); }
+  else { selected.has(k) ? selected.delete(k) : selected.add(k); }
+  document.querySelectorAll('.chip').forEach(c=>{
+    c.classList.toggle('on', c.dataset.k==='전체' ? selected.size===0 : selected.has(c.dataset.k));
+  });
+});
+$('#quick').innerHTML = QUICK.map(q=>`<button type="button">${q}</button>`).join('');
+$('#quick').addEventListener('click', e=>{
+  if(e.target.tagName==='BUTTON'){ $('#region').value = e.target.textContent; search(); }
+});
+
+/* ---------- API 키 ---------- */
+function refreshKeyBtn(){
+  const ok = !!store.get('oai_key');
+  $('#keyBtn').classList.toggle('ok', ok);
+  $('#keyBtn').textContent = ok ? '✅ API 연결됨' : '🔑 API 키 설정';
+}
+function openKey(){
+  $('#keyInput').value = store.get('oai_key') || '';
+  const m = store.get('oai_model') || 'gpt-4o-mini';
+  const opt = [...$('#modelInput').options].some(o=>o.value===m);
+  $('#modelInput').value = opt ? m : 'gpt-4o-mini';
+  $('#modelCustom').value = opt ? '' : m;
+  $('#keyBg').classList.add('show');
+}
+$('#keyBtn').onclick = openKey;
+$('#keySave').onclick = ()=>{
+  const k = $('#keyInput').value.trim();
+  if(k) store.set('oai_key', k);
+  store.set('oai_model', $('#modelCustom').value.trim() || $('#modelInput').value);
+  $('#keyBg').classList.remove('show'); refreshKeyBtn();
+};
+$('#keyDel').onclick = ()=>{ store.del('oai_key'); $('#keyInput').value=''; refreshKeyBtn(); };
+refreshKeyBtn();
+
+/* ---------- 모달 닫기 ---------- */
+document.addEventListener('click', e=>{
+  const c = e.target.dataset?.close;
+  if(c) $('#'+c).classList.remove('show');
+  if(e.target.classList.contains('modal-bg')) e.target.classList.remove('show');
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') document.querySelectorAll('.modal-bg.show').forEach(m=>m.classList.remove('show'));
+});
+
+/* ---------- 검색 ---------- */
+$('#form').addEventListener('submit', e=>{ e.preventDefault(); search(); });
+
+async function search(){
+  const region = $('#region').value.trim();
+  if(!region){ $('#region').focus(); $('#region').placeholder='📍 지역을 먼저 입력해 주세요!'; return; }
+  const key = store.get('oai_key');
+  if(!key){ openKey(); return; }
+
+  const cats = selected.size ? [...selected] : ['전체(다양하게)'];
+  const count = +$('#count').value;
+  $('#goBtn').disabled = true;
+  $('#out').innerHTML = `<div class="loading"><div class="foods"><span>🍙</span><span>🍜</span><span>🍣</span><span>🍰</span></div>
+    <p>AI가 ${esc(region)} 맛집을 열심히 찾는 중...</p></div>`;
+
+  const sys = `너는 한국 지역 맛집을 잘 아는 친절한 미식 가이드야. 반드시 JSON 객체만 출력해.
+가능한 한 실제로 존재하고 잘 알려진 식당을 추천하고, 확실하지 않은 정보(정확한 주소, 가격)는 '약' 등으로 표현해.
+형식:
+{"restaurants":[{
+ "name":"식당 이름",
+ "category":"한식|중식|일식|양식|분식|고기|해산물|아시안|카페·디저트 중 하나",
+ "oneLine":"한 줄 소개 (40자 이내)",
+ "address":"도로명 주소 또는 대략적 위치",
+ "nearby":"가까운 역/랜드마크 (예: 성수역 3번 출구 도보 5분)",
+ "priceRange":"1인 예상 가격대 (예: 1~2만원)",
+ "mood":["분위기 키워드 2~3개"],
+ "menus":[{"name":"메뉴명","price":"12,000원","desc":"짧은 설명","signature":true}],
+ "tip":"방문 팁 (웨이팅, 추천 시간대 등)"
+}]}
+menus는 3~4개, 대표 메뉴 하나는 signature:true.`;
+  const user = `지역: ${region}
+카테고리: ${cats.join(', ')}
+가격대: ${$('#price').value}
+동행: ${$('#who').value}
+${count}곳을 추천해줘.${cats.length>1?' 선택한 카테고리를 골고루 섞어줘.':''}`;
+
+  try{
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body: JSON.stringify({
+        model: store.get('oai_model') || 'gpt-4o-mini',
+        response_format:{type:'json_object'},
+        messages:[{role:'system',content:sys},{role:'user',content:user}]
+      })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data?.error?.message || ('HTTP '+res.status));
+    const parsed = JSON.parse(data.choices[0].message.content);
+    results = parsed.restaurants || [];
+    if(!results.length) throw new Error('추천 결과가 비어 있어요. 다른 지역으로 시도해 보세요.');
+    render(region);
+  }catch(err){
+    $('#out').innerHTML = `<div class="err">😢 앗, 맛집을 불러오지 못했어요.<br><b>${esc(err.message)}</b><br>
+      <small>API 키·모델명이 맞는지, 결제 크레딧이 남아 있는지 확인해 주세요.</small></div>`;
+  }finally{
+    $('#goBtn').disabled = false;
+  }
+}
+
+function catStyle(name){
+  return CATS.find(c=>c.k===name) || {e:'🍴',c:'#ffb3c7',cl:'#ffe3ec'};
+}
+
+function render(region){
+  $('#out').innerHTML = `
+    <div class="result-head"><h2>✨ ${esc(region)} 추천 맛집</h2><small>카드를 누르면 위치·메뉴가 나와요</small></div>
+    <div class="grid">${results.map((r,i)=>{
+      const s = catStyle(r.category);
+      return `<div class="r" data-i="${i}" style="--c:${s.c};--cl:${s.cl};animation-delay:${i*.07}s">
+        <div class="badge">${esc(r.category)}</div>
+        <div class="ic">${s.e}</div>
+        <h3>${esc(r.name)}</h3>
+        <div class="one">${esc(r.oneLine)}</div>
+        <div class="meta">
+          <span class="tag">💰 ${esc(r.priceRange)}</span>
+          ${(r.mood||[]).slice(0,2).map(m=>`<span class="tag">#${esc(m)}</span>`).join('')}
+        </div>
+        <div class="more">자세히 보기 →</div>
+      </div>`;}).join('')}
+    </div>`;
+  document.querySelectorAll('.r').forEach(el=>el.onclick=()=>openDetail(results[+el.dataset.i], region));
+}
+
+function openDetail(r, region){
+  const s = catStyle(r.category);
+  const q = encodeURIComponent(`${r.name} ${region}`);
+  const addrQ = encodeURIComponent(r.address ? `${r.address} ${r.name}` : `${region} ${r.name}`);
+  const m = $('#detail');
+  m.style.setProperty('--c', s.c); m.style.setProperty('--cl', s.cl);
+  m.innerHTML = `
+    <button class="x" data-close="detailBg">✕</button>
+    <div class="m-top">
+      <div class="ic">${s.e}</div>
+      <h2>${esc(r.name)}</h2>
+      <p>${esc(r.oneLine)}</p>
+      <div class="meta" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+        <span class="tag" style="background:#fff">${esc(r.category)}</span>
+        <span class="tag" style="background:#fff">💰 ${esc(r.priceRange)}</span>
+        ${(r.mood||[]).map(x=>`<span class="tag" style="background:#fff">#${esc(x)}</span>`).join('')}
+      </div>
+    </div>
+    <div class="m-body">
+      <h3>📍 위치</h3>
+      <div class="addr"><span>🏠</span><div>${esc(r.address)}${r.nearby?`<br><small>🚇 ${esc(r.nearby)}</small>`:''}</div></div>
+      <iframe class="map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+        src="https://maps.google.com/maps?q=${addrQ}&hl=ko&z=16&output=embed"></iframe>
+      <div class="links">
+        <a class="nv" href="https://map.naver.com/p/search/${q}" target="_blank" rel="noopener">네이버지도</a>
+        <a class="kk" href="https://map.kakao.com/?q=${q}" target="_blank" rel="noopener">카카오맵</a>
+        <a class="gg" href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">구글지도</a>
+      </div>
+
+      <h3>😋 추천 메뉴 & 가격</h3>
+      <ul class="menu">${(r.menus||[]).map(mn=>`
+        <li class="${mn.signature?'best':''}">
+          <div><div class="nm">${mn.signature?'👑 ':''}${esc(mn.name)}</div>${mn.desc?`<div class="ds">${esc(mn.desc)}</div>`:''}</div>
+          <div class="pr">${esc(mn.price)}</div>
+        </li>`).join('')}
+      </ul>
+
+      ${r.tip?`<h3>💡 방문 꿀팁</h3><div class="tipbox">${esc(r.tip)}</div>`:''}
+      <div class="note">※ AI가 생성한 정보라 실제 주소·가격·영업 여부와 다를 수 있어요. 방문 전 지도 앱에서 꼭 확인하세요!</div>
+    </div>`;
+  $('#detailBg').classList.add('show');
+}
+</script>
+</body>
+</html>
